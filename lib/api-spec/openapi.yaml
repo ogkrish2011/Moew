@@ -1,0 +1,432 @@
+openapi: 3.1.0
+info:
+  title: Api
+  version: 0.1.0
+  description: Bot Dashboard API
+servers:
+  - url: /api
+    description: Base API path
+tags:
+  - name: health
+    description: Health operations
+  - name: auth
+    description: Authentication operations
+  - name: bot
+    description: Bot management operations
+  - name: stats
+    description: Real-time statistics
+paths:
+  /healthz:
+    get:
+      operationId: healthCheck
+      tags: [health]
+      summary: Health check
+      responses:
+        "200":
+          description: Healthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthStatus"
+
+  /auth/discord:
+    get:
+      operationId: discordLogin
+      tags: [auth]
+      summary: Redirect to Discord OAuth
+      responses:
+        "302":
+          description: Redirect to Discord
+
+  /auth/discord/callback:
+    get:
+      operationId: discordCallback
+      tags: [auth]
+      summary: Discord OAuth callback
+      parameters:
+        - name: code
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: state
+          in: query
+          required: false
+          schema:
+            type: string
+      responses:
+        "302":
+          description: Redirect to dashboard
+        "401":
+          description: Unauthorized
+
+  /auth/logout:
+    post:
+      operationId: logout
+      tags: [auth]
+      summary: Logout
+      responses:
+        "200":
+          description: Logged out
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MessageResponse"
+
+  /auth/me:
+    get:
+      operationId: getMe
+      tags: [auth]
+      summary: Get current user
+      responses:
+        "200":
+          description: Current user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        "401":
+          description: Unauthorized
+
+  /bot/status:
+    get:
+      operationId: getBotStatus
+      tags: [bot]
+      summary: Get bot status and info
+      responses:
+        "200":
+          description: Bot status
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BotStatus"
+        "401":
+          description: Unauthorized
+
+  /bot/guilds:
+    get:
+      operationId: getBotGuilds
+      tags: [bot]
+      summary: Get all guilds the bot is in
+      responses:
+        "200":
+          description: List of guilds
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Guild"
+        "401":
+          description: Unauthorized
+
+  /bot/activity:
+    put:
+      operationId: setBotActivity
+      tags: [bot]
+      summary: Set bot activity/status
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SetActivityRequest"
+      responses:
+        "200":
+          description: Activity updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MessageResponse"
+        "401":
+          description: Unauthorized
+
+  /bot/reconnect:
+    post:
+      operationId: reconnectBot
+      tags: [bot]
+      summary: Reconnect the bot
+      responses:
+        "200":
+          description: Reconnect initiated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MessageResponse"
+        "401":
+          description: Unauthorized
+
+  /stats/overview:
+    get:
+      operationId: getStatsOverview
+      tags: [stats]
+      summary: Get real-time stats overview
+      responses:
+        "200":
+          description: Stats overview
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StatsOverview"
+        "401":
+          description: Unauthorized
+
+  /stats/events:
+    get:
+      operationId: getStatEvents
+      tags: [stats]
+      summary: Get recent bot events
+      parameters:
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 50
+      responses:
+        "200":
+          description: Recent events
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/BotEvent"
+        "401":
+          description: Unauthorized
+
+  /settings:
+    get:
+      operationId: getSettings
+      tags: [bot]
+      summary: Get dashboard settings
+      responses:
+        "200":
+          description: Settings
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DashboardSettings"
+        "401":
+          description: Unauthorized
+
+    put:
+      operationId: updateSettings
+      tags: [bot]
+      summary: Update dashboard settings
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DashboardSettings"
+      responses:
+        "200":
+          description: Settings updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DashboardSettings"
+        "401":
+          description: Unauthorized
+
+components:
+  schemas:
+    HealthStatus:
+      type: object
+      properties:
+        status:
+          type: string
+      required:
+        - status
+
+    MessageResponse:
+      type: object
+      properties:
+        message:
+          type: string
+      required:
+        - message
+
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+        username:
+          type: string
+        discriminator:
+          type: string
+        avatar:
+          type: string
+          nullable: true
+        email:
+          type: string
+          nullable: true
+        globalName:
+          type: string
+          nullable: true
+      required:
+        - id
+        - username
+        - discriminator
+
+    BotStatus:
+      type: object
+      properties:
+        online:
+          type: boolean
+        username:
+          type: string
+        discriminator:
+          type: string
+        id:
+          type: string
+        avatar:
+          type: string
+          nullable: true
+        status:
+          type: string
+          enum: [online, idle, dnd, invisible]
+        activityType:
+          type: string
+          enum: [playing, streaming, listening, watching, competing]
+          nullable: true
+        activityName:
+          type: string
+          nullable: true
+        uptime:
+          type: integer
+          description: Uptime in seconds
+        ping:
+          type: integer
+          description: Websocket ping in ms
+        guildCount:
+          type: integer
+        userCount:
+          type: integer
+        channelCount:
+          type: integer
+      required:
+        - online
+        - username
+        - discriminator
+        - id
+        - status
+        - uptime
+        - ping
+        - guildCount
+        - userCount
+        - channelCount
+
+    Guild:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        icon:
+          type: string
+          nullable: true
+        memberCount:
+          type: integer
+        ownerId:
+          type: string
+        joinedAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - name
+        - memberCount
+        - ownerId
+        - joinedAt
+
+    SetActivityRequest:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [online, idle, dnd, invisible]
+        activityType:
+          type: string
+          enum: [playing, streaming, listening, watching, competing]
+          nullable: true
+        activityName:
+          type: string
+          nullable: true
+      required:
+        - status
+
+    StatsOverview:
+      type: object
+      properties:
+        guildCount:
+          type: integer
+        userCount:
+          type: integer
+        channelCount:
+          type: integer
+        commandsRun:
+          type: integer
+        messagesProcessed:
+          type: integer
+        uptime:
+          type: integer
+        ping:
+          type: integer
+        memoryUsageMb:
+          type: number
+        cpuUsagePercent:
+          type: number
+      required:
+        - guildCount
+        - userCount
+        - channelCount
+        - commandsRun
+        - messagesProcessed
+        - uptime
+        - ping
+        - memoryUsageMb
+        - cpuUsagePercent
+
+    BotEvent:
+      type: object
+      properties:
+        id:
+          type: string
+        type:
+          type: string
+        description:
+          type: string
+        guildId:
+          type: string
+          nullable: true
+        guildName:
+          type: string
+          nullable: true
+        timestamp:
+          type: string
+          format: date-time
+      required:
+        - id
+        - type
+        - description
+        - timestamp
+
+    DashboardSettings:
+      type: object
+      properties:
+        theme:
+          type: string
+          enum: [dark, light, midnight, ocean, forest, sunset]
+        ownerId:
+          type: string
+          nullable: true
+        allowedUserIds:
+          type: array
+          items:
+            type: string
+      required:
+        - theme

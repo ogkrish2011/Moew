@@ -1,0 +1,15 @@
+packages:
+  "framer-motion": "For smooth page transitions, stagger animations, and interactive component feedback"
+  "date-fns": "For formatting uptime and event timestamps nicely"
+  "clsx": "Utility for constructing className strings conditionally"
+  "tailwind-merge": "Utility to resolve Tailwind CSS class conflicts"
+
+images:
+  - path: "artifacts/bot-dashboard/public/images/login-bg.png"
+    description: "Abstract 3D glassmorphism floating shapes over a deep dark gray and black sleek gradient background, professional and high-tech"
+    aspect_ratio: "16:9"
+
+notes:
+  - "Assuming @workspace/api-client-react exposes the generated react-query hooks and types"
+  - "Theme persistence handled via localStorage 'dashboard-theme'"
+  - "Auth session relies on standard cookies from API"
